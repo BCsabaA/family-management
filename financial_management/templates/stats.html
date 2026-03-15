@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <h3 class="card-title">Havi költések kategóriánként</h3>
+        
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="myChart"></canvas>
+        </div>
+        
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('myChart').getContext('2d');
+const myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ months | tojson }},
+        datasets: {{ datasets | tojson }}
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false, // Ez kritikus a fix magasságú konténernél!
+        scales: {
+            x: { stacked: true },
+            y: { 
+                stacked: true,
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) { return value + ' Ft'; } // Ft kiírása a tengelyre
+                }
+            }
+        },
+        plugins: {
+            legend: { 
+                position: 'bottom',
+                labels: { boxWidth: 12, padding: 15 }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
+

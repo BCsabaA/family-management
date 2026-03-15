@@ -1,0 +1,94 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mobile-card">
+            <div class="card-body">
+                <h3 class="card-title mb-4">Gyors rögzítés</h3>
+                <form method="POST">
+		  <div class="mb-3">
+		    <label class="form-label">Dátum</label>
+		    <input type="date" name="date" class="form-control form-control-lg" value="{{ today }}">
+		  </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Összeg (Ft)</label>
+                        <input type="number" name="amount" class="form-control form-control-lg" placeholder="0" required autofocus>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Helyszín</label>
+                        <select name="location_id" class="form-select">
+                            <option value="">Válassz helyszínt (opcionális)</option>
+                            {% for loc in locations %}
+                            <option value="{{ loc.id }}">{{ loc.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+		    <div class="mb-3">
+		      <label class="form-label">Kategória</label>
+		      <select name="category_id" id="category_select" class="form-select form-select-lg">
+			{% for cat in categories %}
+			<option value="{{ cat.id }}">{{ cat.name }}</option>
+			{% endfor %}
+		      </select>
+		    </div>
+
+
+                    <div class="mb-3">
+		      <label class="form-label">Zseb (Fizetési mód)</label>
+		      <select name="wallet_id" class="form-select form-select">
+			{% for wallet in wallets %}
+			<option value="{{ wallet.id }}" 
+				{% if wallet.id == default_wallet_id %} selected {% endif %}>
+			  {{ wallet.name }}
+			</option>
+			{% endfor %}
+		      </select>
+		    </div>
+
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Mentés most</button>
+                        <a href="/" class="btn btn-outline-secondary">Mégse</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Az adatok precíz generálása
+    const locationDefaults = {
+        {% for loc in locations %}
+            {% if loc.default_category_id %}
+            "{{ loc.id }}": "{{ loc.default_category_id }}"{% if not loop.last %},{% endif %}
+            {% endif %}
+        {% endfor %}
+    };
+
+    const locationSelect = document.querySelector('select[name="location_id"]');
+    const categorySelect = document.getElementById('category_select');
+
+    if (locationSelect && categorySelect) {
+        locationSelect.addEventListener('change', function() {
+            const locId = this.value;
+            const catId = locationDefaults[locId];
+            
+            if (catId) {
+                categorySelect.value = catId;
+            }
+        });
+    } else {
+        // Ha mobilon vagy, ez segíthet látni, ha nem találja a mezőket
+        alert("Hiba: Nem találom a select mezőket!");
+    }
+});
+</script>
+
+
+{% endblock %}

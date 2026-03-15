@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h2 class="mb-4">Legutóbbi költések</h2>
+
+{% for tx in transactions %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title mb-0">{{ tx.total_amount }} Ft</h5>
+                <p class="text-muted small mb-1">
+                    {{ tx.date.strftime('%Y.%m.%d %H:%M') }} | 
+                    {{ tx.location.name if tx.location else 'Ismeretlen hely' }}
+                </p>
+                <span class="badge bg-secondary">{{ tx.items[0].category.name if tx.items else 'Nincs kategória' }}</span>
+            </div>
+            <div>
+                <a href="{{ url_for('split_transaction', tx_id=tx.id) }}" class="btn btn-outline-primary btn-sm">Bontás</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

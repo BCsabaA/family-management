@@ -1,0 +1,32 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <h3>Tranzakció bontása</h3>
+        <p>Eredeti összeg: <strong>{{ tx.total_amount }} Ft</strong></p>
+        <hr>
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Mennyit választasz le belőle?</label>
+                <input type="number" name="split_amount" class="form-control" step="0.01" required>
+                <div class="form-text">Ennyivel csökken az eredeti tétel összege.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Új kategória az új tételnek</label>
+                <select name="category_id" class="form-select">
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success">Bontás végrehajtása</button>
+                <a href="/" class="btn btn-light">Mégse</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
