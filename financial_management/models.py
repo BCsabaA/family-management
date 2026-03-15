@@ -12,15 +12,15 @@ class Category(db.Model):
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    total_budget = db.Column(db.Float, default=0.0)
-    is_active = db.Column(db.Boolean, default=True)
+    # Kapcsolat a tranzakció tételekkel
+    items = db.relationship('TransactionItem', backref='project', lazy=True)
 
 class Tag(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
 
-# TransactionItemTag - Kapcsolótábla a Many-to-Many kapcsolathoz
-transaction_item_tags = db.Table('transaction_item_tags',
+# Címke kapcsolótábla
+item_tags = db.Table('item_tags',
     db.Column('item_id', db.Integer, db.ForeignKey('transaction_item.id'), primary_key=True),
     db.Column('tag_id', db.Integer, db.ForeignKey('tag.id'), primary_key=True)
 )
@@ -80,5 +80,5 @@ class TransactionItem(db.Model):
     category = db.relationship('Category', backref='items')
     
     # Címkék kapcsolata
-    tags = db.relationship('Tag', secondary=transaction_item_tags, backref=db.backref('items', lazy='dynamic'))
+    tags = db.relationship('Tag', secondary=item_tags, backref=db.backref('items', lazy='dynamic'))
 

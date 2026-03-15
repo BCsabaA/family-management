@@ -8,40 +8,65 @@
         <div style="position: relative; height: 350px; width: 100%;">
             <canvas id="myChart"></canvas>
         </div>
-        
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-const ctx = document.getElementById('myChart').getContext('2d');
-const myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: {{ months | tojson }},
-        datasets: {{ datasets | tojson }}
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false, // Ez kritikus a fix magasságú konténernél!
-        scales: {
-            x: { stacked: true },
-            y: { 
-                stacked: true,
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) { return value + ' Ft'; } // Ft kiírása a tengelyre
+// Várunk, amíg az egész oldal és a Chart.js is betöltődik
+window.onload = function() {
+    try {
+        const ctx = document.getElementById('myChart').getContext('2d');
+        
+        // Adatok előkészítése a Pythonból jövő változókból
+        const labels = {{ months | tojson if months else '["Nincs adat"]' }};
+        const categoryDatasets = {{ datasets | tojson if datasets else '[]' }};
+        const limitData = {{ limit_data | tojson if limit_data else '[]' }};
+
+        // Ha van keret adatunk, adjuk hozzá a vonalat
+        if (limitData.length > 0) {
+            categoryDatasets.push({
+                label: 'Összesített keret',
+                data: limitData,
+                type: 'line',
+                borderColor: '#ff4d4d',
+                borderWidth: 3,
+                borderDash: [5, 5],
+                fill: false,
+                pointRadius: 2,
+                order: -1
+            });
+        }
+
+        // Grafikon létrehozása
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: categoryDatasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { 
+                        stacked: true 
+                    },
+                    y: { 
+                        stacked: true, 
+                        beginAtZero: true 
+                    }
+                },
+                plugins: {
+                    legend: { position: 'bottom' }
                 }
             }
-        },
-        plugins: {
-            legend: { 
-                position: 'bottom',
-                labels: { boxWidth: 12, padding: 15 }
-            }
-        }
+        });
+        console.log("Chart.js sikeresen inicializálva.");
+    } catch (error) {
+        console.error("Hiba a grafikon rajzolásakor:", error);
     }
-});
+};
 </script>
 {% endblock %}
-

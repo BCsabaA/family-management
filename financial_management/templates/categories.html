@@ -1,0 +1,49 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <h3 class="mb-4"><i class="bi bi-tags"></i> Kategóriák és Keretek</h3>
+        
+        <form method="POST">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Név</th>
+                            <th>Havi keret (Ft)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td>
+                                <input type="text" name="name_{{ cat.id }}" class="form-control" value="{{ cat.name }}">
+                            </td>
+                            <td>
+                                <input type="number" name="limit_{{ cat.id }}" class="form-control" value="{{ cat.monthly_limit }}">
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <tr class="table-light">
+                            <td>
+                                <input type="text" name="new_category_name" class="form-control" placeholder="Új kategória...">
+                            </td>
+                            <td>
+                                <input type="number" name="new_category_limit" class="form-control" placeholder="0">
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="d-grid gap-2 mt-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save"></i> Összes mentése
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

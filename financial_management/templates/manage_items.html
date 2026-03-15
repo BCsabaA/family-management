@@ -1,0 +1,28 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <h3><i class="bi bi-gear"></i> {{ title }} kezelése</h3>
+        <form method="POST">
+            <table class="table">
+                <thead><tr><th>Név</th><th>Művelet</th></tr></thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td><input type="text" name="name_{{ item.id }}" class="form-control" value="{{ item.name }}"></td>
+                        <td>
+                            </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="table-light">
+                        <td><input type="text" name="new_name" class="form-control" placeholder="Új hozzáadása..."></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary w-100">Mentés</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

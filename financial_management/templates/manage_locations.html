@@ -1,0 +1,57 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <h3><i class="bi bi-geo-alt"></i> Helyszínek kezelése</h3>
+        <form method="POST">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Helyszín neve</th>
+                            <th>Alapértelmezett kategória</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locations %}
+                        <tr>
+                            <td>
+                                <input type="text" name="name_{{ loc.id }}" class="form-control" value="{{ loc.name }}">
+                            </td>
+                            <td>
+                                <select name="category_{{ loc.id }}" class="form-select">
+                                    <option value="">-- Nincs --</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}" {% if loc.default_category_id == cat.id %}selected{% endif %}>
+                                        {{ cat.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <tr class="table-light">
+                            <td>
+                                <input type="text" name="new_name" class="form-control" placeholder="Új helyszín...">
+                            </td>
+                            <td>
+                                <select name="new_category_id" class="form-select">
+                                    <option value="">-- Nincs --</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 mt-3">
+                <i class="bi bi-save"></i> Mentés
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

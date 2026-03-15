@@ -1,0 +1,93 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="card mobile-card">
+    <div class="card-body">
+        <h3><i class="bi bi-pencil-square"></i> Tranzakció szerkesztése</h3>
+        <form method="POST">
+            <div class="row g-2 mb-3">
+                <div class="col-6">
+                    <label class="form-label">Dátum</label>
+                    <input type="date" name="date" class="form-control" value="{{ tx.date.strftime('%Y-%m-%d') }}">
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Összeg (Összesen)</label>
+                    <input type="number" name="total_amount" class="form-control" value="{{ tx.total_amount }}" step="0.01">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Helyszín és Zseb</label>
+                <div class="input-group">
+                    <select name="location_id" class="form-select">
+                        {% for loc in locations %}
+                        <option value="{{ loc.id }}" {% if tx.location_id == loc.id %}selected{% endif %}>{{ loc.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="wallet_id" class="form-select">
+                        {% for w in wallets %}
+                        <option value="{{ w.id }}" {% if tx.wallet_id == w.id %}selected{% endif %}>{{ w.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <hr>
+            <h5>Tételek (Bontás)</h5>
+            {% for item in tx.items %}
+            <div class="bg-light p-2 rounded mb-3 border">
+                <div class="row g-2 mb-2">
+                    <div class="col-4">
+                        <input type="number" name="item_amount_{{ item.id }}" class="form-control form-control-sm" value="{{ item.amount }}" step="0.01">
+                    </div>
+                    <div class="col-8">
+                        <select name="item_category_{{ item.id }}" class="form-select form-select-sm">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if item.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <select name="item_project_{{ item.id }}" class="form-select form-select-sm">
+                        <option value="">-- Nincs projekt --</option>
+                        {% for p in projects %}
+                        <option value="{{ p.id }}" {% if item.project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="small text-muted">Címkék:</label>
+                    <select name="item_tags_{{ item.id }}" class="form-select form-select-sm" multiple>
+                        {% for t in tags %}
+                        <option value="{{ t.id }}" {% if t in item.tags %}selected{% endif %}>{{ t.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="p-2 border border-primary border-dashed rounded mb-3">
+                <label class="small text-primary">Új tétel hozzáadása (Bontás)</label>
+                <div class="row g-2">
+                    <div class="col-4">
+                        <input type="number" name="new_item_amount" class="form-control form-control-sm" placeholder="Összeg">
+                    </div>
+                    <div class="col-8">
+                        <select name="new_item_category" class="form-select form-select-sm">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success">Módosítások mentése</button>
+                <a href="{{ url_for('index') }}" class="btn btn-light">Mégse</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
