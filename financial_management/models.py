@@ -12,7 +12,7 @@ class Category(db.Model):
 class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    # Kapcsolat a tranzakció tételekkel
+    budget = db.Column(db.Float, default=0.0)  # Az új mező a projekt keretnek
     items = db.relationship('TransactionItem', backref='project', lazy=True)
 
 class Tag(db.Model):

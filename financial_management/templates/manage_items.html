@@ -3,25 +3,66 @@
 {% block content %}
 <div class="card mobile-card">
     <div class="card-body">
-        <h3><i class="bi bi-gear"></i> {{ title }} kezelése</h3>
+        <h3 class="mb-4">
+            <i class="bi bi-gear"></i> {{ title }} kezelése
+        </h3>
+
         <form method="POST">
-            <table class="table">
-                <thead><tr><th>Név</th><th>Művelet</th></tr></thead>
-                <tbody>
-                    {% for item in items %}
-                    <tr>
-                        <td><input type="text" name="name_{{ item.id }}" class="form-control" value="{{ item.name }}"></td>
-                        <td>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Név</th>
+                            {# Csak akkor mutatjuk a Keret oszlopot, ha Projektekkel dolgozunk #}
+                            {% if type == 'projects' %}
+                            <th>Projekt Keret (Ft)</th>
+                            {% endif %}
+                            <th class="text-end">Művelet</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>
+                                <input type="text" name="name_{{ item.id }}" class="form-control" value="{{ item.name }}" required>
                             </td>
-                    </tr>
-                    {% endfor %}
-                    <tr class="table-light">
-                        <td><input type="text" name="new_name" class="form-control" placeholder="Új hozzáadása..."></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-            <button type="submit" class="btn btn-primary w-100">Mentés</button>
+                            
+                            {% if type == 'projects' %}
+                            <td>
+                                <input type="number" name="budget_{{ item.id }}" class="form-control" value="{{ item.budget or 0 }}" step="0.01">
+                            </td>
+                            {% endif %}
+
+                            <td class="text-end">
+                                {# Itt a jövőben elhelyezhetünk egy törlés gombot is #}
+                                <span class="text-muted small">ID: {{ item.id }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        <tr class="table-light">
+                            <td>
+                                <input type="text" name="new_name" class="form-control" placeholder="Új {{ title|lower }} neve...">
+                            </td>
+                            
+                            {% if type == 'projects' %}
+                            <td>
+                                <input type="number" name="new_budget" class="form-control" placeholder="0">
+                            </td>
+                            {% endif %}
+
+                            <td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-grid gap-2 mt-3">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="bi bi-save"></i> Módosítások mentése
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-light">Vissza</a>
+            </div>
         </form>
     </div>
 </div>

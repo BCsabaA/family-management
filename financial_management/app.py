@@ -309,21 +309,23 @@ def manage_locations():
 def manage_projects():
     if request.method == 'POST':
         new_name = request.form.get('new_name')
+        new_budget = request.form.get('new_budget')
         if new_name:
-            db.session.add(Project(name=new_name))
+            db.session.add(Project(name=new_name, budget=float(new_budget or 0)))
         
         for proj in Project.query.all():
             name = request.form.get(f'name_{proj.id}')
-            if name: proj.name = name
-            
+            budget = request.form.get(f'budget_{proj.id}')
+            if name:
+                proj.name = name
+                proj.budget = float(budget or 0)
         db.session.commit()
         return redirect(url_for('manage_projects'))
     
-    # ABC rendezés a magyar szabályok figyelembevételével
     projects_raw = Project.query.all()
     projects = sorted(projects_raw, key=lambda x: locale.strxfrm(x.name))
     return render_template('manage_items.html', items=projects, title="Projektek", type="projects")
-
+    
 @app.route('/settings/tags', methods=['GET', 'POST'])
 def manage_tags():
     if request.method == 'POST':
@@ -367,15 +369,27 @@ def edit_transaction(tx_id):
             tag_ids = request.form.getlist(f'item_tags_{item_id}')
             item.tags = [Tag.query.get(int(tid)) for tid in tag_ids]
 
-        # 3. Új tétel hozzáadása (Bontás funkció)
-        new_amount = request.form.get('new_item_amount')
-        if new_amount and float(new_amount) > 0:
-            new_item = TransactionItem(
-                transaction_id=tx.id,
-                amount=float(new_amount),
-                category_id=int(request.form.get('new_item_category'))
-            )
-            db.session.add(new_item)
+        # 3. Új tétel hozzáadása (Bontás funkció) és az első tétel csökkentése
+        new_amount_raw = request.form.get('new_item_amount')
+        if new_amount_raw and float(new_amount_raw) > 0:
+            new_amount = float(new_amount_raw)
+            
+            # Megkeressük az első tételt (ezt tekintjük "fő" tételnek, amiből levonunk)
+            main_item = tx.items[0]
+            
+            if new_amount < main_item.amount:
+                # Levonjuk a fő tételből
+                main_item.amount -= new_amount
+                
+                # Létrehozzuk az új tételt
+                new_item = TransactionItem(
+                    transaction_id=tx.id,
+                    amount=new_amount,
+                    category_id=int(request.form.get('new_item_category'))
+                )
+                db.session.add(new_item)
+            else:
+                flash('Hiba: Az új tétel összege nem lehet nagyobb, mint a maradék!', 'danger')
 
         db.session.commit()
         flash('Tranzakció sikeresen frissítve!', 'success')

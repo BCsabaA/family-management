@@ -90,4 +90,30 @@
         </form>
     </div>
 </div>
+
 {% endblock %}
+
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    // 1. Megkeressük a főösszeget
+    const totalAmount = parseFloat(document.querySelector('input[name="total_amount"]').value) || 0;
+    
+    // 2. Összeadjuk a meglévő tételek összegeit
+    let itemsSum = 0;
+    // Minden olyan inputot nézünk, aminek a neve 'item_amount_' kezdetű
+    const itemInputs = document.querySelectorAll('input[name^="item_amount_"]');
+    itemInputs.forEach(input => {
+        itemsSum += parseFloat(input.value) || 0;
+    });
+
+    // 3. Hozzáadjuk az esetleges új tétel (bontás) összegét is
+    const newAmount = parseFloat(document.querySelector('input[name="new_item_amount"]').value) || 0;
+    itemsSum += newAmount;
+
+    // 4. Ellenőrzés: kerekítési hibák elkerülése (0.01 pontosság)
+    if (Math.abs(totalAmount - itemsSum) > 0.01) {
+        e.preventDefault(); // Megállítjuk a form beküldését
+        alert(`Hiba: A tételek összege (${itemsSum} Ft) nem egyezik a tranzakció főösszegével (${totalAmount} Ft)! \n\nKérlek, javítsd az összegeket a mentés előtt.`);
+    }
+});
+</script>
