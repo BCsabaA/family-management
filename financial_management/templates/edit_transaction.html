@@ -56,11 +56,21 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div>
-                    <label class="small text-muted">Címkék:</label>
-                    <select name="item_tags_{{ item.id }}" class="form-select form-select-sm" multiple>
+                <div class="mb-2">
+                    <label class="small text-muted d-block">Címkék:</label>
+                    <div id="tag-container-{{ item.id }}" class="mb-2">
+                        {% for t in item.tags %}
+                        <span class="badge bg-secondary me-1">
+                            {{ t.name }} 
+                            <input type="hidden" name="item_tags_{{ item.id }}" value="{{ t.id }}">
+                            <i class="bi bi-x-circle cursor-pointer" onclick="this.parentElement.remove()"></i>
+                        </span>
+                        {% endfor %}
+                    </div>
+                    <select class="form-select form-select-sm" onchange="addTag(this, {{ item.id }})">
+                        <option value="">+ Címke hozzáadása</option>
                         {% for t in tags %}
-                        <option value="{{ t.id }}" {% if t in item.tags %}selected{% endif %}>{{ t.name }}</option>
+                        <option value="{{ t.id }}">{{ t.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -94,6 +104,22 @@
 {% endblock %}
 
 <script>
+function addTag(select, itemId) {
+    if(!select.value) return;
+    const container = document.getElementById(`tag-container-${itemId}`);
+    const tagName = select.options[select.selectedIndex].text;
+    const tagId = select.value;
+
+    // Ellenőrizzük, ne legyen duplikáció
+    if (container.querySelector(`input[value="${tagId}"]`)) return;
+
+    const span = document.createElement('span');
+    span.className = 'badge bg-secondary me-1';
+    span.innerHTML = `${tagName} <input type="hidden" name="item_tags_${itemId}" value="${tagId}"> <i class="bi bi-x-circle cursor-pointer" onclick="this.parentElement.remove()"></i>`;
+    container.appendChild(span);
+    select.value = "";
+}
+
 document.querySelector('form').addEventListener('submit', function(e) {
     // 1. Megkeressük a főösszeget
     const totalAmount = parseFloat(document.querySelector('input[name="total_amount"]').value) || 0;

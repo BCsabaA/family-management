@@ -61,12 +61,14 @@ class Transaction(db.Model):
     location_id = db.Column(db.Integer, db.ForeignKey('location.id'))
     total_amount = db.Column(db.Float, nullable=False)
     attachment_path = db.Column(db.String(255)) # Fájl elérése
-    
+    type = db.Column(db.String(20), default='expense') # 'expense', 'income', 'transfer'
+    to_wallet_id = db.Column(db.Integer, db.ForeignKey('wallet.id'), nullable=True)
     # Kapcsolat a tételekkel (cascade törlés: ha törlöd a tranzakciót, törlődnek a tételek is)
     items = db.relationship('TransactionItem', backref='parent', cascade="all, delete-orphan")
     # Kapcsolatok a könnyű eléréshez (Relationship-ek)
     user = db.relationship('User', backref='transactions')
-    wallet = db.relationship('Wallet', backref='transactions')
+    wallet = db.relationship('Wallet', foreign_keys=[wallet_id], backref='transactions_out')
+    to_wallet = db.relationship('Wallet', foreign_keys=[to_wallet_id], backref='transactions_in')    
     location = db.relationship('Location', backref='transactions') # EZ KELL AZ ISMERETLEN HELY ELLEN
 
 class TransactionItem(db.Model):

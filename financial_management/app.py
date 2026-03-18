@@ -59,6 +59,8 @@ def index():
 @app.route('/add', methods=['GET', 'POST'])
 def add_transaction():
     if request.method == 'POST':
+        tx_type = request.form.get('type', 'expense')
+        to_wallet_id = request.form.get('to_wallet_id')
         amount = float(request.form.get('amount'))
         loc_id_raw = request.form.get('location_id')
         loc_id = int(loc_id_raw) if loc_id_raw and loc_id_raw != "" else None
@@ -72,16 +74,21 @@ def add_transaction():
             date=tx_date,
             location_id=loc_id, # Most már biztosan szám vagy None
             user_id=1,
-            wallet_id=int(request.form.get('wallet_id'))
+            wallet_id=int(request.form.get('wallet_id')),
+            type=tx_type,
+            to_wallet_id=int(to_wallet_id) if to_wallet_id else None
         )
         db.session.add(new_tx)
         db.session.flush()
 
-        new_item = TransactionItem(
-            transaction_id=new_tx.id,
-            amount=amount,
-            category_id=request.form.get('category_id') or 1
-        )
+        if tx_type == "transfer":# Áttárolásnál egy üres kategóriájú tételt hozunk létre
+            new_item = TransactionItem(amount=amount, category_id=None)
+        else:
+            new_item = TransactionItem(
+                transaction_id=new_tx.id,
+                amount=amount,
+                category_id=request.form.get('category_id') or 1
+            )
         db.session.add(new_item)
         db.session.commit()
         
@@ -198,11 +205,28 @@ def stats():
         limit_data = [100000]
         datasets = [{'label': 'Teszt', 'data': [50000]}]
 
+    wallets = Wallet.query.all()
+    balances = []
+    for w in wallets:
+        # 1. Bevételek és áttárolások, amik ebbe a zsebbe érkeztek (CÉL)
+        income = db.session.query(func.sum(Transaction.total_amount))\
+            .filter(Transaction.to_wallet_id == w.id).scalar() or 0
+            
+        # 2. Kiadások és áttárolások, amik ebből a zsebből mentek (FORRÁS)
+        expense = db.session.query(func.sum(Transaction.total_amount))\
+            .filter(Transaction.wallet_id == w.id).scalar() or 0
+            
+        balances.append({
+            'name': w.name, 
+            'amount': income - expense,
+            #'currency': w.currency.symbol if w.currency else 'Ft'
+        })
     return render_template('stats.html', 
                             months=month_labels, 
                             datasets=datasets,
                             limit_value=total_monthly_limit,
-                            limit_data=limit_data)
+                            limit_data=limit_data,
+                            balances=balances)
 
 @app.route('/delete_transaction/<int:tx_id>')
 def delete_transaction(tx_id):
@@ -348,52 +372,41 @@ def manage_tags():
 @app.route('/edit/<int:tx_id>', methods=['GET', 'POST'])
 def edit_transaction(tx_id):
     tx = Transaction.query.get_or_404(tx_id)
-    
     if request.method == 'POST':
-        # 1. Alapadatok frissítése
+        # Alapadatok (típus is!)
+        tx.type = request.form.get('type')
         tx.date = datetime.strptime(request.form.get('date'), '%Y-%m-%d')
-        tx.location_id = int(request.form.get('location_id')) or None
-        tx.wallet_id = int(request.form.get('wallet_id'))
         tx.total_amount = float(request.form.get('total_amount'))
+        tx.wallet_id = int(request.form.get('wallet_id'))
+        # Ha áttárolás vagy bevétel, kell a cél zseb is
+        to_w = request.form.get('to_wallet_id')
+        tx.to_wallet_id = int(to_w) if to_w else None
 
-        # 2. Meglévő tételek frissítése
-        current_item_ids = [item.id for item in tx.items]
-        for item_id in current_item_ids:
-            item = TransactionItem.query.get(item_id)
-            item.amount = float(request.form.get(f'item_amount_{item_id}'))
-            item.category_id = int(request.form.get(f'item_category_{item_id}'))
-            item.project_id = request.form.get(f'item_project_{item_id}')
+        # TÉTELEK FRISSÍTÉSE
+        for item in tx.items:
+            item.amount = float(request.form.get(f'item_amount_{item.id}'))
+            item.category_id = int(request.form.get(f'item_category_{item.id}'))
+            item.project_id = request.form.get(f'item_project_{item.id}') or None
             if item.project_id: item.project_id = int(item.project_id)
             
-            # Címkék kezelése (Many-to-Many)
-            tag_ids = request.form.getlist(f'item_tags_{item_id}')
+            # Címkék (Badge logika a frontendnek)
+            tag_ids = request.form.getlist(f'item_tags_{item.id}')
             item.tags = [Tag.query.get(int(tid)) for tid in tag_ids]
 
-        # 3. Új tétel hozzáadása (Bontás funkció) és az első tétel csökkentése
-        new_amount_raw = request.form.get('new_item_amount')
-        if new_amount_raw and float(new_amount_raw) > 0:
-            new_amount = float(new_amount_raw)
-            
-            # Megkeressük az első tételt (ezt tekintjük "fő" tételnek, amiből levonunk)
+        # ÚJ TÉTEL (BONTÁS) - Itt a Python végzi el a matekot mentés előtt
+        new_amt = request.form.get('new_item_amount')
+        if new_amt and float(new_amt) > 0:
+            val = float(new_amt)
             main_item = tx.items[0]
-            
-            if new_amount < main_item.amount:
-                # Levonjuk a fő tételből
-                main_item.amount -= new_amount
-                
-                # Létrehozzuk az új tételt
-                new_item = TransactionItem(
-                    transaction_id=tx.id,
-                    amount=new_amount,
-                    category_id=int(request.form.get('new_item_category'))
-                )
-                db.session.add(new_item)
-            else:
-                flash('Hiba: Az új tétel összege nem lehet nagyobb, mint a maradék!', 'danger')
+            if val < main_item.amount:
+                main_item.amount -= val
+                db.session.add(TransactionItem(transaction_id=tx.id, amount=val, 
+                                             category_id=int(request.form.get('new_item_category'))))
 
         db.session.commit()
-        flash('Tranzakció sikeresen frissítve!', 'success')
-        return redirect(url_for('index'))
+        flash('Mentve!', 'success')
+        # Nem az indexre megyünk, hanem maradunk a szerkesztőben!
+        return redirect(url_for('edit_transaction', tx_id=tx.id))
 
     # Adatok lekérése a listákhoz
     locations = sorted(Location.query.all(), key=lambda x: locale.strxfrm(x.name))

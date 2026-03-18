@@ -7,10 +7,19 @@
             <div class="card-body">
                 <h3 class="card-title mb-4">Gyors rögzítés</h3>
                 <form method="POST">
-		  <div class="mb-3">
-		    <label class="form-label">Dátum</label>
-		    <input type="date" name="date" class="form-control form-control-lg" value="{{ today }}">
-		  </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tranzakció típusa</label>
+                        <select name="type" id="type_select" class="form-select border-primary text-primary fw-bold">
+                            <option value="income" {% if (tx.type if tx else 'income') == 'income' %}selected{% endif %}>BEVÉTEL (+)</option>
+                            <option value="transfer" {% if (tx.type if tx else 'transfer') == 'transfer' %}selected{% endif %}>ÁTTÁROLÁS (A -> B)</option>
+                            <option value="expense" {% if (tx.type if tx else 'expense') == 'expense' %}selected{% endif %}>KIADÁS (-)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Dátum</label>
+                        <input type="date" name="date" class="form-control form-control-lg" value="{{ today }}">
+                    </div>
 
                     <div class="mb-3">
                         <label class="form-label">Összeg (Ft)</label>
@@ -27,28 +36,36 @@
                         </select>
                     </div>
 
-		    <div class="mb-3">
-		      <label class="form-label">Kategória</label>
-		      <select name="category_id" id="category_select" class="form-select form-select-lg">
-			{% for cat in categories %}
-			<option value="{{ cat.id }}">{{ cat.name }}</option>
-			{% endfor %}
-		      </select>
-		    </div>
-
+                    <div class="mb-3">
+                        <label class="form-label">Kategória</label>
+                        <select name="category_id" id="category_select" class="form-select form-select-lg">
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
                     <div class="mb-3">
-		      <label class="form-label">Zseb (Fizetési mód)</label>
-		      <select name="wallet_id" class="form-select form-select">
-			{% for wallet in wallets %}
-			<option value="{{ wallet.id }}" 
-				{% if wallet.id == default_wallet_id %} selected {% endif %}>
-			  {{ wallet.name }}
-			</option>
-			{% endfor %}
-		      </select>
-		    </div>
+                        <label class="form-label">Zseb (Fizetési mód)</label>
+                        <select name="wallet_id" class="form-select form-select">
+                            {% for wallet in wallets %}
+                            <option value="{{ wallet.id }}" 
+                                {% if wallet.id == default_wallet_id %} selected {% endif %}>
+                            {{ wallet.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
+                    <div id="to_wallet_section" class="mb-3 d-none">
+                        <label class="form-label text-success">Cél zseb (Hová érkezik a pénz?)</label>
+                        <select name="to_wallet_id" class="form-select border-success">
+                            <option value="">-- Válassz cél zsebet --</option>
+                            {% for w in wallets %}
+                            <option value="{{ w.id }}" {% if (tx.to_wallet_id if tx else None) == w.id %}selected{% endif %}>{{ w.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
                     
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary btn-lg">Mentés most</button>
@@ -61,6 +78,29 @@
 </div>
 
 <script>
+// Dinamikusan elrejtjük vagy mutatjuk a cél zsebet
+document.getElementById('type_select').addEventListener('change', function() {
+    const type = this.value;
+    const toWalletSection = document.getElementById('to_wallet_section');
+    const locationSection = document.getElementById('location_section'); // Adj ID-t a helyszín div-nek
+    const categorySection = document.getElementById('category_section'); // Adj ID-t a kategória div-nek
+
+    // Alapértelmezett: minden látszik
+    toWalletSection.classList.add('d-none');
+    locationSection.classList.remove('d-none');
+    categorySection.classList.remove('d-none');
+
+    if (type === 'transfer') {
+        toWalletSection.classList.remove('d-none');
+        locationSection.classList.add('d-none'); // Áttárolásnál nincs helyszín
+        categorySection.classList.add('d-none'); // Áttárolásnál nincs kategória
+    } else if (type === 'income') {
+        toWalletSection.classList.remove('d-none'); // Bevételnél a cél zseb kell
+        categorySection.classList.add('d-none');    // Bevételnél általában nincs kategória
+        // A helyszín maradhat, ha tudni akarjuk honnan jött (pl. "Cég neve")
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // 1. Az adatok precíz generálása
     const locationDefaults = {

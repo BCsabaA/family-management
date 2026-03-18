@@ -11,6 +11,22 @@
     </div>
 </div>
 
+<div class="card mobile-card mt-4">
+    <div class="card-body">
+        <h5>Zsebek egyenlege</h5>
+        <table class="table">
+            {% for b in balances %}
+            <tr>
+                <td>{{ b.name }}</td>
+                <td class="text-end {% if b.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                    <strong>{{ b.amount }} Ft</strong>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>

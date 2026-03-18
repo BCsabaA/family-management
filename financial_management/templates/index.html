@@ -20,12 +20,23 @@
                     <i class="bi bi-geo-alt"></i> {{ tx.location.name if tx.location else 'Ismeretlen hely' }}
                 </p>
 
-                <div class="d-flex flex-wrap gap-1 mb-3">
+                <div class="d-flex flex-wrap gap-1 mb-1">
                     {% for item in tx.items %}
-                    <span class="badge rounded-pill bg-secondary text-dark" style="--bs-bg-opacity: .5;">
-                        {{ item.category.name if item.category else 'Nincs kategória' }}
-                        {% if tx.items|length > 1 %} ({{ item.amount }} Ft){% endif %}
-                    </span>
+                        <span class="badge rounded-pill bg-info text-dark">
+                            <i class="bi bi-tag"></i> {{ item.category.name if item.category else 'Nincs kategória' }}
+                        </span>
+                        
+                        {% if item.project %}
+                        <span class="badge rounded-pill bg-warning text-dark">
+                            <i class="bi bi-folder"></i> {{ item.project.name }}
+                        </span>
+                        {% endif %}
+
+                        {% for tag in item.tags %}
+                        <span class="badge rounded-pill bg-secondary">
+                            <i class="bi bi-hash"></i> {{ tag.name }}
+                        </span>
+                        {% endfor %}
                     {% endfor %}
                 </div>
             </div>
